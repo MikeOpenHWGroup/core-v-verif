@@ -44,7 +44,7 @@
  */
 
 //
-// Execute step and compare of dut ISS instance vs riscv RTL instance
+// Execute step and compare of dut OVP instance vs riscv RTL instance
 //
 `ifndef T0_TYPE
   `define T0_TYPE "RV32IMC"
@@ -57,7 +57,8 @@ import uvm_pkg::*;      // needed for the UVM messaging service (`uvm_info(), et
 `define CV32E40P_TRACER $root.uvmt_cv32_tb.dut_wrap.cv32e40p_wrapper_i.tracer_i
 `define CV32E40P_MMRAM  $root.uvmt_cv32_tb.dut_wrap.ram_i
 
-`define CV32E40P_ISS $root.uvmt_cv32_tb.iss_wrap.cpu
+`define CV32E40P_OVP      $root.uvmt_cv32_tb.iss_wrap.cpu
+`define CV32E40P_OVP_RVVI $root.uvmt_cv32_tb.iss_wrap.cpu.state
 
 
 module uvmt_cv32_step_compare
@@ -92,9 +93,10 @@ module uvmt_cv32_step_compare
   // Note that register writebacks to GPRs will still be checked during each instruction retirement even with stalls
   always @(posedge clknrst_if.reset_n) begin
     is_stall_sim = `CV32E40P_MMRAM.is_stall_sim();
-    if (is_stall_sim) begin
-      `uvm_info("Step-andCompare", $sformatf("is_stall_sim set to 1, disabling CSR wire checks and stable GPR register checks"), UVM_NONE)
-    end
+    //if (is_stall_sim) begin
+    //  `uvm_info("Step-andCompare", $sformatf("is_stall_sim set to 1, disabling CSR wire checks and stable GPR register checks"), UVM_NONE)
+    //end
+    `uvm_info("Step-andCompare", $sformatf("is_stall_sim set to 1, NOT disabling CSR wire checks and stable GPR register checks"), UVM_NONE)
   end
 
   function void check_32bit(input string compared, input bit [31:0] expected, input logic [31:0] actual);
@@ -122,8 +124,8 @@ module uvmt_cv32_step_compare
       logic [31:0] csr_val;
 
       // Compare PC
-      check_32bit(.compared("PC"), .expected(step_compare_if.ovp_cpu_PCr), 
-                                   .actual(step_compare_if.insn_pc));
+      //check_32bit(.compared("PC"), .expected(step_compare_if.ovp_cpu_PCr), .actual(step_compare_if.insn_pc));
+      check_32bit(.compared("PC"), .expected(`CV32E40P_OVP_RVVI.pcr), .actual(step_compare_if.insn_pc));
       step_compare_if.num_pc_checks++;
 
       // Compare GPR's
@@ -146,21 +148,22 @@ module uvmt_cv32_step_compare
             check_32bit(.compared(compared_str), .expected(step_compare_if.ovp_cpu_GPR[idx][31:0]), .actual(insn_regs_write_value));
          // FIXME:strichmo:I am removing the static (non-written) register checks, as they fail in presence of I and D bus RAM stalls
          // It would be highly desirable to find an alternative for this type of check to ensure unintended writes to do not
-         else if (!is_stall_sim && !`CV32E40P_TRACER.insn_wb_bypass) // Use actual value from RTL to compare registers which should have not changed
+         //else if (!is_stall_sim && !`CV32E40P_TRACER.insn_wb_bypass) // Use actual value from RTL to compare registers which should have not changed
+         else if (!`CV32E40P_TRACER.insn_wb_bypass) // Use actual value from RTL to compare registers which should have not changed
             check_32bit(.compared(compared_str), .expected(step_compare_if.ovp_cpu_GPR[idx][31:0]), .actual(step_compare_if.riscy_GPR[idx]));
          step_compare_if.num_gpr_checks++;
       end
 
       // Compare CSR's
       `ifdef ISS
-        foreach(iss_wrap.cpu.CSR[index]) begin
+        foreach(`CV32E40P_OVP_RVVI.CSR[index]) begin
            step_compare_if.num_csr_checks++;
            ignore = 0;
            csr_val = 0;
            
            // CSR timing at instruction retirement is not completely deterministic in this simple model in presence of OBI stalls
-           if (is_stall_sim)
-            ignore = 1;
+           //if (is_stall_sim)
+           // ignore = 1;
            case (index)
              "marchid"       : csr_val = cv32e40p_pkg::MARCHID; // warning!  defined in cv32e40p_pkg
              
@@ -223,7 +226,7 @@ module uvmt_cv32_step_compare
            endcase // case (index)
 
            if (!ignore)
-             check_32bit(.compared(index), .expected(iss_wrap.cpu.CSR[index]), .actual(csr_val));
+             check_32bit(.compared(index), .expected(`CV32E40P_OVP_RVVI.CSR[index]), .actual(csr_val));
 
         end // foreach (ovp.cpu.CSR[index])
         
@@ -238,7 +241,7 @@ module uvmt_cv32_step_compare
         if (`CV32E40P_TRACER.insn_regs_write.size()) begin
           gpr_addr  = `CV32E40P_TRACER.insn_regs_write[0].addr;
           gpr_value = `CV32E40P_TRACER.insn_regs_write[0].value;
-          `CV32E40P_ISS.GPR_rtl[gpr_addr] = gpr_value;
+          `CV32E40P_OVP.GPR_rtl[gpr_addr] = gpr_value;
         end
     endfunction // pushRTL2RM
     
@@ -280,13 +283,12 @@ module uvmt_cv32_step_compare
            state <= STEP_OVP;
         end
         STEP_OVP: begin
-           wait (step_compare_if.ovp_cpu_retire.triggered)
+           wait (step_compare_if.ovp_cpu_valid.triggered)
            step_ovp <= 0;
            ->`CV32E40P_TRACER.ovp_retire;
            state <= COMPARE;
         end
         COMPARE: begin 
-           ->step_compare_if.ovp_cpu_busWait;
            compare();
            step_rtl <= 1;
            ->ev_compare;
@@ -332,7 +334,7 @@ module uvmt_cv32_step_compare
 
 
     function automatic void sample();
-        string decode = iss_wrap.cpu.Decode;
+        string decode = `CV32E40P_OVP.Decode;
         string ins_str, op[4], key, val;
         int i;
         ins_t ins;

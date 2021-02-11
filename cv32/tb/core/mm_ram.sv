@@ -186,10 +186,10 @@ module mm_ram
             end
             else begin
                 randcase
-                    2: begin
+                    0: begin
                         // No delays
                     end
-                    1: begin
+                    100: begin
                         // Create RAM stall delays
                         rnd_stall_regs[RND_STALL_INSTR_EN]    = 1;
                         rnd_stall_regs[RND_STALL_INSTR_MODE]  = $urandom_range(2,1);
@@ -200,10 +200,10 @@ module mm_ram
                 endcase
 
                 randcase
-                    2: begin
+                    0: begin
                         // No delays
                     end
-                    1: begin
+                    100: begin
                         // Create RAM stall delays
                         rnd_stall_regs[RND_STALL_DATA_EN]     = 1;
                         rnd_stall_regs[RND_STALL_DATA_MODE]   = $urandom_range(2,1);
