@@ -15,9 +15,9 @@
 
 
 // Directories
-+incdir+${DV_UVME_PATH}
-+incdir+${DV_UVME_PATH}/cov
-+incdir+${DV_UVME_PATH}/vseq
+--include ${DV_UVME_PATH}
+--include ${DV_UVME_PATH}/cov
+--include ${DV_UVME_PATH}/vseq
 
 // Files
 ${DV_UVME_PATH}/uvme_cv32e40p_pkg.sv

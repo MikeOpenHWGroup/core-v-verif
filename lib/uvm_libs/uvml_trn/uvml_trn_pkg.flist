@@ -17,7 +17,7 @@
 
 
 // Directories
-+incdir+${DV_UVML_TRN_PATH}
+--include ${DV_UVML_TRN_PATH}
 
 // Files
 ${DV_UVML_TRN_PATH}/uvml_trn_pkg.sv

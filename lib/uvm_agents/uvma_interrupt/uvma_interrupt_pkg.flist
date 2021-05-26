@@ -18,9 +18,9 @@
 
 
 // Directories
-+incdir+${DV_UVMA_INTERRUPT_PATH}
-+incdir+${DV_UVMA_INTERRUPT_PATH}/cov
-+incdir+${DV_UVMA_INTERRUPT_PATH}/seq
+--include ${DV_UVMA_INTERRUPT_PATH}
+--include ${DV_UVMA_INTERRUPT_PATH}/cov
+--include ${DV_UVMA_INTERRUPT_PATH}/seq
 
 // Files
 ${DV_UVMA_INTERRUPT_PATH}/uvma_interrupt_pkg.sv

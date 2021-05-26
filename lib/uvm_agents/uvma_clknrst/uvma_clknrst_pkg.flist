@@ -17,9 +17,9 @@
 
 
 // Directories
-+incdir+${DV_UVMA_CLKNRST_PATH}
-+incdir+${DV_UVMA_CLKNRST_PATH}/cov
-+incdir+${DV_UVMA_CLKNRST_PATH}/seq
+--include ${DV_UVMA_CLKNRST_PATH}
+--include ${DV_UVMA_CLKNRST_PATH}/cov
+--include ${DV_UVMA_CLKNRST_PATH}/seq
 
 // Files
 ${DV_UVMA_CLKNRST_PATH}/uvma_clknrst_pkg.sv

@@ -17,7 +17,8 @@
 
 
 // Directories
-+incdir+${DV_UVML_HRTBT_PATH}
+//+incdir+${DV_UVML_HRTBT_PATH}
+--include ${DV_UVML_HRTBT_PATH}
 
 // Files
 ${DV_UVML_HRTBT_PATH}/uvml_hrtbt_pkg.sv

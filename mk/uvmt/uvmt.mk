@@ -307,7 +307,11 @@ else
 ifeq ($(SIMULATOR), riviera)
 include $(CORE_V_VERIF)/mk/uvmt/riviera.mk
 else
+ifeq ($(SIMULATOR), vivado)
+include $(CORE_V_VERIF)/mk/uvmt/vivado.mk
+else
 include $(CORE_V_VERIF)/mk/uvmt/unsim.mk
+endif
 endif
 endif
 endif

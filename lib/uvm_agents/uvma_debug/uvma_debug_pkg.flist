@@ -15,9 +15,9 @@
 
 
 // Directories
-+incdir+${DV_UVMA_DEBUG_PATH}
-+incdir+${DV_UVMA_DEBUG_PATH}/cov
-+incdir+${DV_UVMA_DEBUG_PATH}/seq
+--include ${DV_UVMA_DEBUG_PATH}
+--include ${DV_UVMA_DEBUG_PATH}/cov
+--include ${DV_UVMA_DEBUG_PATH}/seq
 
 // Files
 ${DV_UVMA_DEBUG_PATH}/uvma_debug_pkg.sv
