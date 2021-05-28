@@ -66,7 +66,7 @@ class uvma_debug_drv_c extends uvm_driver#(
 endclass : uvma_debug_drv_c
 
 
-`pragma protect begin
+//`pragma protect begin
 
 
 function uvma_debug_drv_c::new(string name="uvma_debug_drv", uvm_component parent=null);
@@ -131,7 +131,7 @@ task uvma_debug_drv_c::drv_req(uvma_debug_seq_item_c req);
 endtask : drv_req
 
 
-`pragma protect end
+//`pragma protect end
 
 
 `endif // __UVMA_DEBUG_DRV_SV__

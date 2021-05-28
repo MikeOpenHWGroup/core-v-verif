@@ -40,8 +40,8 @@ VIVADO_RUN_FLAGS         ?=
 VIVADO_CODE_COV_SCOPE    ?= $(MAKE_PATH)/../tools/vivado/ccov_scopes.txt
 VIVADO_USE_ISS           ?= YES
 
-VIVADO_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-VIVADO_FILE_LIST         += -f $(DV_UVMT_PATH)/imperas_iss.flist
+VIVADO_FILE_LIST         ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist.vivado
+VIVADO_FILE_LIST         += -f $(DV_UVMT_PATH)/imperas_iss.flist.vivado
 VIVADO_USER_COMPILE_ARGS += --define $(CV_CORE_UC)_TRACE_EXECUTION
 ifeq ($(USE_ISS),YES)
 	VIVADO_RUN_FLAGS     += +USE_ISS
@@ -127,7 +127,7 @@ comp: mk_results $(CV_CORE_PKG) $(OVP_MODEL_DPI)
 		$(VIVADO_USER_COMPILE_ARGS) \
 		--include $(DV_UVME_PATH) \
 		--include $(DV_UVMT_PATH) \
-		-f $(CV_CORE_MANIFEST) \
+		-f $(CV_CORE_MANIFEST).vivado \
 		$(VIVADO_FILE_LIST) \
 		-work $(VIVADO_WORK)
 #		+$(UVM_PLUSARGS)

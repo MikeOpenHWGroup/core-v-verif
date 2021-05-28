@@ -79,7 +79,7 @@ class uvma_interrupt_cov_model_c extends uvm_component;
 endclass : uvma_interrupt_cov_model_c
 
 
-`pragma protect begin
+//`pragma protect begin
 
 
 function uvma_interrupt_cov_model_c::new(string name="uvma_interrupt_cov_model", uvm_component parent=null);
@@ -172,7 +172,7 @@ function void uvma_interrupt_cov_model_c::sample_seq_item();
 endfunction : sample_seq_item
 
 
-`pragma protect end
+//`pragma protect end
 
 
 `endif // __UVMA_INTERRUPT_COV_MODEL_SV__

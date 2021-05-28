@@ -104,7 +104,7 @@ class uvma_interrupt_seq_item_c extends uvml_trn_seq_item_c;
    
 endclass : uvma_interrupt_seq_item_c
 
-`pragma protect begin
+//`pragma protect begin
 
 
 function uvma_interrupt_seq_item_c::new(string name="uvma_interrupt_seq_item");
@@ -114,7 +114,7 @@ function uvma_interrupt_seq_item_c::new(string name="uvma_interrupt_seq_item");
 endfunction : new
 
 
-`pragma protect end
+//`pragma protect end
 
 
 `endif // __UVMA_INTERRUPT_SEQ_ITEM_SV__

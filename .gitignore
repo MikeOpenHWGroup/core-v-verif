@@ -37,3 +37,7 @@ cva6/tests/riscv-tests/
 uvm/riscv-dv/
 riviera_results/
 */vendor_lib/dpi_dasm_spike/
+vivado_results
+xsim.dir
+xvlog.log
+xvlog.pb

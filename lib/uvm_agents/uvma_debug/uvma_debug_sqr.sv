@@ -51,7 +51,7 @@ class uvma_debug_sqr_c extends uvm_sequencer#(
 endclass : uvma_debug_sqr_c
 
 
-`pragma protect begin
+//`pragma protect begin
 
 
 function uvma_debug_sqr_c::new(string name="uvma_debug_sqr", uvm_component parent=null);
@@ -78,7 +78,7 @@ function void uvma_debug_sqr_c::build_phase(uvm_phase phase);
 endfunction : build_phase
 
 
-`pragma protect end
+//`pragma protect end
 
 
 `endif // __UVMA_DEBUG_SQR_SV__

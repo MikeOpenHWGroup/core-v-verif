@@ -80,7 +80,7 @@ class uvma_debug_cov_model_c extends uvm_component;
 endclass : uvma_debug_cov_model_c
 
 
-`pragma protect begin
+//`pragma protect begin
 
 
 function uvma_debug_cov_model_c::new(string name="uvma_debug_cov_model", uvm_component parent=null);
@@ -173,7 +173,7 @@ function void uvma_debug_cov_model_c::sample_seq_item();
 endfunction : sample_seq_item
 
 
-`pragma protect end
+//`pragma protect end
 
 
 `endif // __UVMA_DEBUG_COV_MODEL_SV__

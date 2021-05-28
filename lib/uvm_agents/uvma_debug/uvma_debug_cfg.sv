@@ -57,7 +57,7 @@ class uvma_debug_cfg_c extends uvm_object;
 endclass : uvma_debug_cfg_c
 
 
-`pragma protect begin
+//`pragma protect begin
 
 
 function uvma_debug_cfg_c::new(string name="uvma_debug_cfg");
@@ -67,7 +67,7 @@ function uvma_debug_cfg_c::new(string name="uvma_debug_cfg");
 endfunction : new
 
 
-`pragma protect end
+//`pragma protect end
 
 
 `endif // __UVMA_DEBUG_CFG_SV__

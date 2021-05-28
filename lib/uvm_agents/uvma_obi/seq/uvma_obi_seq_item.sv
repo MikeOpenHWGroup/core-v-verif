@@ -49,7 +49,7 @@ class uvma_obi_seq_item_c extends uvml_trn_seq_item_c;
 
 endclass : uvma_obi_seq_item_c
 
-`pragma protect begin
+//`pragma protect begin
 
 
 function uvma_obi_seq_item_c::new(string name="uvma_obi_seq_item");
@@ -67,7 +67,7 @@ function string uvma_obi_seq_item_c::convert2string();
 endfunction : convert2string
 
 
-`pragma protect end
+//`pragma protect end
 
 
 `endif // __UVMA_OBI_SEQ_ITEM_SV__

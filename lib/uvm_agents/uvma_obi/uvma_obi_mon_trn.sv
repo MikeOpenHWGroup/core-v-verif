@@ -40,7 +40,7 @@ class uvma_obi_mon_trn_c extends uvma_obi_seq_item_c;
 endclass : uvma_obi_mon_trn_c
 
 
-`pragma protect begin
+//`pragma protect begin
 
 
 function uvma_obi_mon_trn_c::new(string name="uvma_obi_mon_trn");
@@ -50,7 +50,7 @@ function uvma_obi_mon_trn_c::new(string name="uvma_obi_mon_trn");
 endfunction : new
 
 
-`pragma protect end
+//`pragma protect end
 
 
 `endif // __UVMA_OBI_MON_TRN_SV__

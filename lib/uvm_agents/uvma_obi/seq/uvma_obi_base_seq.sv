@@ -39,8 +39,7 @@ class uvma_obi_base_seq_c extends uvm_sequence#(
 endclass : uvma_obi_base_seq_c
 
 
-`pragma protect begin
-
+//`pragma protect begin
 
 function uvma_obi_base_seq_c::new(string name="uvma_obi_base_seq");
    
@@ -49,7 +48,6 @@ function uvma_obi_base_seq_c::new(string name="uvma_obi_base_seq");
 endfunction : new
 
 
-`pragma protect end
-
+//`pragma protect end
 
 `endif // __UVMA_OBI_BASE_SEQ_SV__
