@@ -25,6 +25,8 @@
 
 VIVADO_HOME              ?= /tools/Xilinx/Vivado/2020.2/bin
 VIVADO_CMP               ?= $(VIVADO_HOME)/xvlog
+VIVADO_ELAB              ?= $(VIVADO_HOME)/xelab
+VIVADO_SIM               ?= $(VIVADO_HOME)/xsim
 
 #VIVADO_CMP_FLAGS         ?= $(SV_CMP_FLAGS)
 #VIVADO_CMP_FLAGS         ?= -sv --define CV32E40P_ASSERT_ON
@@ -34,8 +36,8 @@ VIVADO_CFG_COMPILE_FLAGS ?= --define NO_PULP
 VIVADO_UVM_ARGS          ?= -L uvm
 VIVADO_RESULTS           ?= $(if $(CV_RESULTS),$(CV_RESULTS)/vivado_results,$(MAKE_PATH)/vivado_results)
 VIVADO_COREVDV_RESULTS   ?= $(VIVADO_RESULTS)/corev-dv
-VIVADO_WORK              ?= $(VIVADO_RESULTS)/$(CFG)/vivado_work
-VIVADO_IMAGE             ?= vivado.out
+#VIVADO_WORK              ?= $(VIVADO_RESULTS)/$(CFG)/vivado_work
+VIVADO_WORK              ?= vivado_work
 VIVADO_RUN_FLAGS         ?=
 VIVADO_CODE_COV_SCOPE    ?= $(MAKE_PATH)/../tools/vivado/ccov_scopes.txt
 VIVADO_USE_ISS           ?= YES
@@ -44,7 +46,7 @@ VIVADO_FILE_LIST         ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist.vivado
 VIVADO_FILE_LIST         += -f $(DV_UVMT_PATH)/imperas_iss.flist.vivado
 VIVADO_USER_COMPILE_ARGS += --define $(CV_CORE_UC)_TRACE_EXECUTION
 ifeq ($(USE_ISS),YES)
-	VIVADO_RUN_FLAGS     += +USE_ISS
+	VIVADO_RUN_FLAGS     += --testplusarg +USE_ISS
 endif
 
 # Seed management for constrained-random sims. For the DSIM Makefile (dsim.mk),
@@ -66,7 +68,7 @@ endif
 endif
 
 VIVADO_RUN_FLAGS         += $(USER_RUN_FLAGS)
-VIVADO_RUN_FLAGS         += -sv_seed $(VIVADO_RNDSEED)
+VIVADO_RUN_FLAGS         += --sv_seed $(VIVADO_RNDSEED)
 
 # Variables to control wave dumping from command the line
 # Humans _always_ forget the "S", so you can have it both ways...
@@ -116,9 +118,19 @@ mk_results:
 	$(MKDIR_P) $(VIVADO_RESULTS)
 	$(MKDIR_P) $(VIVADO_WORK)
 
+mk_vivado_flist: $(CV_CORE_PKG)
+	@echo "$(BANNER)"
+	@echo '* Translating core RTL manifest into something Vivado can process...'
+	@echo "$(BANNER)"
+	$(shell perl -p -e "s/\+incdir\+/--include /g" $(CV_CORE_MANIFEST) > $(CV_CORE_MANIFEST).vivado)
+
 ################################################################################
 # VIVADO compile target
-comp: mk_results $(CV_CORE_PKG) $(OVP_MODEL_DPI)
+
+comp: mk_results $(CV_CORE_PKG) $(OVP_MODEL_DPI) mk_vivado_flist
+	@echo "$(BANNER)"
+	@echo '* Vivado compile...'
+	@echo "$(BANNER)"
 	$(VIVADO_CMP) \
 		$(VIVADO_CMP_FLAGS) \
 		$(VIVADO_UVM_ARGS) \
@@ -130,8 +142,6 @@ comp: mk_results $(CV_CORE_PKG) $(OVP_MODEL_DPI)
 		-f $(CV_CORE_MANIFEST).vivado \
 		$(VIVADO_FILE_LIST) \
 		-work $(VIVADO_WORK)
-#		+$(UVM_PLUSARGS)
-#		-genimage $(VIVADO_IMAGE)
 
 
 ################################################################################
@@ -164,7 +174,7 @@ comp: mk_results $(CV_CORE_PKG) $(OVP_MODEL_DPI)
 #
 custom: comp $(CUSTOM_DIR)/$(CUSTOM_PROG).hex $(CUSTOM_DIR)/$(CUSTOM_PROG).elf 
 	mkdir -p $(VIVADO_RESULTS)/$(CFG)/$(CUSTOM_PROG)_$(RUN_INDEX) && cd $(VIVADO_RESULTS)/$(CFG)/$(CUSTOM_PROG)_$(RUN_INDEX)  && \
-	$(VIVADO) -l vivado-$(CUSTOM_PROG).log -image $(VIVADO_IMAGE) \
+	$(VIVADO_SIM) -l vivado-$(CUSTOM_PROG).log -image $(VIVADO_IMAGE) \
 		-work $(VIVADO_WORK) $(VIVADO_RUN_FLAGS) $(VIVADO_DMP_FLAGS) \
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
@@ -199,27 +209,39 @@ ifeq ($(shell echo $(TEST) | head -c 6),corev_)
 	OPT_RUN_INDEX_SUFFIX=_$(RUN_INDEX)
 endif
 
+#	mkdir -p $(VIVADO_RESULTS)/$(CFG)/$(TEST_NAME)_$(RUN_INDEX) && \
+#	cd $(VIVADO_RESULTS)/$(CFG)/$(TEST_NAME)_$(RUN_INDEX) && \
+
 test: $(VIVADO_SIM_PREREQ) $(TEST_TEST_DIR)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex gen_ovpsim_ic
-	mkdir -p $(VIVADO_RESULTS)/$(CFG)/$(TEST_NAME)_$(RUN_INDEX) && \
-	cd $(VIVADO_RESULTS)/$(CFG)/$(TEST_NAME)_$(RUN_INDEX) && \
-		$(VIVADO) \
-			-l vivado-$(TEST_NAME).log \
-			-image $(VIVADO_IMAGE) \
-			-work $(VIVADO_WORK) \
+	@echo "$(BANNER)"
+	@echo '* Elaboration (known not to work)'
+	@echo "$(BANNER)"
+		$(VIVADO_ELAB) \
+			uvmt_cv32e40p_tb.uvmt_cv32e40p_tb \
+			--incr \
+			-relax \
+			--O0 \
+			-v 0 \
+			-s uvmt_cv32e40p_tb \
+			-timescale 1ns/1ps \
+			-L uvmt_cv32e40p_tb=uvmt_cv32e40p_tb \
+			--log $(VIVADO_RESULTS)/elaboration.log
+	@echo "$(BANNER)"
+	@echo '* Simulation... '
+	@echo "$(BANNER)"
+		$(VIVADO_SIM) \
+			--R \
+			--log vivado-$(TEST_NAME).log \
 			$(VIVADO_RUN_FLAGS) \
 			$(VIVADO_DMP_FLAGS) \
-			$(TEST_PLUSARGS) \
-			-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
-			-sv_lib $(DPI_DASM_LIB) \
-			-sv_lib $(OVP_MODEL_DPI) \
-			+UVM_TESTNAME=$(TEST_UVM_TEST) \
-			+firmware=$(TEST_TEST_DIR)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
-			+elf_file=$(TEST_TEST_DIR)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf
+			--testplusarg +UVM_TESTNAME=$(TEST_UVM_TEST) \
+			--testplusarg +firmware=$(TEST_TEST_DIR)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
+			--testplusarg +elf_file=$(TEST_TEST_DIR)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf
 
 # Similar to above, but for the ASM directory.
 asm: comp $(ASM_DIR)/$(ASM_PROG).hex $(ASM_DIR)/$(ASM_PROG).elf
 	mkdir -p $(VIVADO_RESULTS)/$(CFG)/$(ASM_PROG)_$(RUN_INDEX) && cd $(VIVADO_RESULTS)/$(CFG)/$(ASM_PROG)_$(RUN_INDEX)  && \
-	$(VIVADO) -l vivado-$(ASM_PROG).log -image $(VIVADO_IMAGE) \
+	$(VIVADO_SIM) -l vivado-$(ASM_PROG).log -image $(VIVADO_IMAGE) \
 		-work $(VIVADO_WORK) $(VIVADO_RUN_FLAGS) $(VIVADO_DMP_FLAGS) \
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
@@ -252,7 +274,7 @@ TEST_PLUSARGS ?= +signature=$(COMPLIANCE_PROG).signature_output
 compliance: comp build_compliance
 	mkdir -p $(VIVADO_RESULTS)/$(CFG)/$(RISCV_ISA)/$(COMPLIANCE_PROG)_$(RUN_INDEX) && cd $(VIVADO_RESULTS)/$(CFG)/$(RISCV_ISA)/$(COMPLIANCE_PROG)_$(RUN_INDEX)  && \
 	export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic && \
-	$(VIVADO) -l vivado-$(COMPLIANCE_PROG).log -image $(VIVADO_IMAGE) \
+	$(VIVADO_SIM) -l vivado-$(COMPLIANCE_PROG).log -image $(VIVADO_IMAGE) \
 		-work $(VIVADO_WORK) $(VIVADO_RUN_FLAGS) $(VIVADO_DMP_FLAGS) $(TEST_PLUSARGS) \
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
@@ -270,7 +292,7 @@ compliance: comp build_compliance
 # Mythical no-test-program testcase.  Might never be used.  Not known tow work
 no-test-program: comp
 	mkdir -p $(VIVADO_RESULTS)/$(CFG)/hello-world_$(RUN_INDEX) && cd $(VIVADO_RESULTS)/$(CFG)/hello-world_$(RUN_INDEX)  && \
-	$(VIVADO) -l vivado-$(UVM_TESTNAME).log -image $(VIVADO_IMAGE) \
+	$(VIVADO_SIM) -l vivado-$(UVM_TESTNAME).log -image $(VIVADO_IMAGE) \
 		-work $(VIVADO_WORK) $(VIVADO_RUN_FLAGS) $(VIVADO_DMP_FLAGS) \
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
@@ -287,7 +309,7 @@ no-test-program: comp
 # rule for rule "vivado-unit-test" (in included ../Firmware.mk).
 vivado-firmware-unit-test: comp
 	mkdir -p $(VIVADO_RESULTS)/firmware_$(RUN_INDEX) && cd $(VIVADO_RESULTS)/firmware_$(RUN_INDEX) && \
-	$(VIVADO) -l vivado-$(UNIT_TEST).log -image $(VIVADO_IMAGE) \
+	$(VIVADO_SIM) -l vivado-$(UNIT_TEST).log -image $(VIVADO_IMAGE) \
 		-work $(VIVADO_WORK) $(VIVADO_RUN_FLAGS) $(VIVADO_DMP_FLAGS) \
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
@@ -362,6 +384,8 @@ corev-dv: clean_riscv-dv \
 clean:
 	rm -f $(VIVADO_IMAGE)
 	rm -rf $(VIVADO_RESULTS)
+	rm -rf xsim.dir
+	rm -f xvlog.*
 
 # All generated files plus the clone of the RTL
 clean_all: clean clean_riscv-dv clean_test_programs clean-bsp clean_compliance clean_embench clean_dpi_dasm_spike

@@ -32,14 +32,14 @@
 -f ${DV_UVME_PATH}/uvme_cv32e40p_pkg.flist
 
 // CV32E40P test bench Directories
---include ${DV_UVMT_PATH}
---include ${DV_UVMT_PATH}/../../tests/uvmt
---include ${DV_UVMT_PATH}/../../tests/uvmt/base-tests
---include ${DV_UVMT_PATH}/../../tests/uvmt/compliance-tests
---include ${DV_UVMT_PATH}/../../tests/uvmt/vseq
++incdir+${DV_UVMT_PATH}
++incdir+${DV_UVMT_PATH}/../../tests/uvmt
++incdir+${DV_UVMT_PATH}/../../tests/uvmt/base-tests
++incdir+${DV_UVMT_PATH}/../../tests/uvmt/compliance-tests
++incdir+${DV_UVMT_PATH}/../../tests/uvmt/vseq
 
 // CV32E40P tests (includes constants/macros/types meant for test bench)
---include ${TBSRC_HOME}
++incdir+${TBSRC_HOME}
 ${DV_UVMT_PATH}/uvmt_cv32e40p_pkg.sv
 
 // CV32E40P test bench files
