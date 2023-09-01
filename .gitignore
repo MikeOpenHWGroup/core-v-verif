@@ -57,7 +57,6 @@ cva6/sim/Verdi.ses*
 riviera_results/
 */vendor_lib/dpi_dasm_spike/
 */vendor_lib/verilab/svlib/
-work*
 vsim.dbg
 *.wlf
 transcript
