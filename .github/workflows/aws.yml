@@ -30,7 +30,8 @@ jobs:
   #        hide-log: true
   skip_aws:
     name: no ci_check required for documentation
-    if: ${{ (github.actor == 'MikeOpenHWGroup' || github.actor == 'suppamax') && github.event.label.name == 'Component:Doc' }}
+    #if: ${{ (github.actor == 'MikeOpenHWGroup' || github.actor == 'suppamax') && github.event.label.name == 'Component:Doc' }}
+    if: ${{ github.actor == 'MikeOpenHWGroup' || github.actor == 'MikeCovrado' }}
     runs-on: ubuntu-latest
     steps:
       - name: info
