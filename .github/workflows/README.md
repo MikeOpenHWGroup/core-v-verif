@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AWS Workflow for CORE-V-VERIF
 
 AWS is used to automate all activities which require access to the licenses provided by OpenHW Group's partners.
