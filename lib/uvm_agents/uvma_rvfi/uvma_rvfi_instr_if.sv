@@ -606,6 +606,7 @@ interface uvma_rvfi_instr_if_t
         rvfi_order,
         rvfi_insn,
         rvfi_trap,
+        rvfi_cause,
         rvfi_halt,
         rvfi_dbg,
         rvfi_dbg_mode,

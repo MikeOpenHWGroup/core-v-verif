@@ -38,6 +38,12 @@ class uvma_rvfi_agent_c#(int ILEN=DEFAULT_ILEN,
    // TLM
    uvm_analysis_port#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN)) instr_mon_ap[];
 
+   // TODO: review these changes
+   //uvma_rvfi_instr_mon_c#(ILEN,XLEN)               instr_monitor;
+   //uvma_rvfi_mon_trn_logger_c#(ILEN,XLEN)          mon_trn_logger;
+
+   //uvm_analysis_port#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN)) rvfi_core_ap;
+
    `uvm_component_param_utils_begin(uvma_rvfi_agent_c)
       `uvm_field_object(cfg  , UVM_DEFAULT)
       `uvm_field_object(cntxt, UVM_DEFAULT)
@@ -133,6 +139,7 @@ function void uvma_rvfi_agent_c::connect_phase(uvm_phase phase);
    if (cfg.cov_model_enabled) begin
       connect_cov_model();
    end
+
    if (cfg.trn_log_enabled) begin
       connect_trn_loggers();
    end
@@ -183,13 +190,13 @@ function void uvma_rvfi_agent_c::retrieve_vif();
    end
 
    // Create virtual interface and fetch virtual interface for each supported CSR
-   begin
+   if (cfg.csr_enabled) begin
       string csrs[$];
 
       cfg.core_cfg.get_supported_csrs(csrs);
 
       foreach (csrs[c]) begin
-         string csr = csrs[c].tolower();;
+         string csr = csrs[c].tolower();
          cntxt.csr_vif[csr] = new[cfg.nret];
 
          for (int i = 0; i < cfg.nret; i++) begin
@@ -247,6 +254,5 @@ function void uvma_rvfi_agent_c::connect_trn_loggers();
    end
 
 endfunction : connect_trn_loggers
-
 
 `endif // __UVMA_RVFI_AGENT_SV__
