@@ -75,7 +75,8 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
    rand bit [(NMEM*XLEN)-1:0]    mem_wdata;
    rand bit [(NMEM*XLEN/8)-1:0]  mem_wmask;
 
-   uvma_rvfi_csr_seq_item_c      csrs[string];
+   uvma_rvfi_csr_seq_item_c      name_csrs[string];
+   uvma_rvfi_csr_seq_item_c      addr_csrs[longint unsigned];
 
    static protected string _log_format_string = "0x%08x %s 0x%01x 0x%08x";
 
@@ -119,7 +120,8 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
       `uvm_field_int(mem_wmask, UVM_DEFAULT)
       `uvm_field_int(mem_wdata, UVM_DEFAULT)
 
-      `uvm_field_aa_object_string(csrs, UVM_DEFAULT)
+      `uvm_field_aa_object_string(name_csrs, UVM_DEFAULT)
+      `uvm_field_aa_object_int(addr_csrs, UVM_DEFAULT)
    `uvm_object_utils_end
 
    /**
@@ -389,12 +391,13 @@ endfunction : check_mem_act
 function st_rvfi uvma_rvfi_instr_seq_item_c::seq2rvfi();
 
     st_rvfi rvfi;
+    longint unsigned csr_index = 0;
+
     rvfi.nret_id = nret_id;
     rvfi.cycle_cnt = cycle_cnt;
     rvfi.order = order;
     rvfi.insn = insn;
     rvfi.trap = trap;
-    rvfi.cause = cause;
     rvfi.halt = halt;
     rvfi.intr = intr;
     rvfi.mode = mode;
@@ -433,6 +436,28 @@ function st_rvfi uvma_rvfi_instr_seq_item_c::seq2rvfi();
     rvfi.mem_wdata = mem_wdata;
     rvfi.mem_wmask = mem_wmask;
 
+    foreach(addr_csrs[i]) begin
+        rvfi.csr_valid[csr_index] = 1;
+        rvfi.csr_addr [csr_index] = addr_csrs[i].addr;
+        rvfi.csr_rdata[csr_index] = addr_csrs[i].rdata;
+        rvfi.csr_rmask[csr_index] = addr_csrs[i].rmask;
+        rvfi.csr_wdata[csr_index] = addr_csrs[i].wdata;
+        rvfi.csr_wmask[csr_index] = addr_csrs[i].wmask;
+        csr_index++;
+        if (csr_index >= CSR_QUEUE_SIZE)
+            break;
+    end
+    foreach(name_csrs[i]) begin
+        rvfi.csr_valid[csr_index] = 1;
+        rvfi.csr_addr [csr_index] = csr_name2addr[i];
+        rvfi.csr_rdata[csr_index] = name_csrs[i].rdata;
+        rvfi.csr_rmask[csr_index] = name_csrs[i].rmask;
+        rvfi.csr_wdata[csr_index] = name_csrs[i].wdata;
+        rvfi.csr_wmask[csr_index] = name_csrs[i].wmask;
+        csr_index++;
+        if (csr_index >= CSR_QUEUE_SIZE)
+            break;
+    end
     return rvfi;
 
 endfunction : seq2rvfi
@@ -444,7 +469,6 @@ function void uvma_rvfi_instr_seq_item_c::rvfi2seq(st_rvfi rvfi);
     order = rvfi.order;
     insn = rvfi.insn;
     trap = rvfi.trap;
-    cause = rvfi.cause;
     halt = rvfi.halt;
     intr = rvfi.intr;
     mode = rvfi.mode;
@@ -483,10 +507,20 @@ function void uvma_rvfi_instr_seq_item_c::rvfi2seq(st_rvfi rvfi);
     mem_wdata = rvfi.mem_wdata;
     mem_wmask = rvfi.mem_wmask;
 
+    for (int i = 0; i < CSR_QUEUE_SIZE; i++) begin
+        if (rvfi.csr_valid[i]) begin
+            uvma_rvfi_csr_seq_item_c csr_trn = uvma_rvfi_csr_seq_item_c#(XLEN)::type_id::create({rvfi.csr_addr[i], "_trn"});
+            csr_trn.addr  = rvfi.csr_addr[i];
+            csr_trn.rdata = rvfi.csr_rdata[i];
+            csr_trn.rmask = rvfi.csr_rmask[i];
+            csr_trn.wdata = rvfi.csr_wdata[i];
+            csr_trn.wmask = rvfi.csr_wmask[i];
+            addr_csrs[rvfi.csr_addr[i]] = csr_trn;
+        end
+    end
 endfunction : rvfi2seq
 
 `pragma protect end
-
 
 `endif // __UVMA_RVFI_SEQ_ITEM_SV__
 

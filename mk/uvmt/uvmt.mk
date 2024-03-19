@@ -72,6 +72,7 @@ SIMULATOR    ?= $(CV_SIMULATOR)
 
 # Optionally exclude the OVPsim (not recommended)
 USE_ISS      ?= YES
+ISS          ?= SPIKE
 
 # Common configuration variables
 CFG             ?= default
@@ -125,6 +126,14 @@ export DV_ISA_DECODER_PATH      = $(CORE_V_VERIF)/lib/isa_decoder
 
 # ImperasDV
 export IMPERAS_DV_HOME          = $(CORE_V_VERIF)/vendor_lib/ImperasDV
+
+export DV_UVMC_RVFI_SCOREBOARD_PATH      = $(CORE_V_VERIF)/lib/uvm_components/uvmc_rvfi_scoreboard/
+export DV_UVMC_RVFI_REFERENCE_MODEL_PATH = $(CORE_V_VERIF)/lib/uvm_components/uvmc_rvfi_reference_model/
+
+export DV_OVPM_HOME             = $(CORE_V_VERIF)/vendor_lib/imperas
+export DV_OVPM_MODEL            = $(DV_OVPM_HOME)/imperas_DV_COREV
+
+export DV_OVPM_DESIGN           = $(DV_OVPM_HOME)/design
 
 # Verilab SVlib
 export DV_SVLIB_PATH            = $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/verilab
