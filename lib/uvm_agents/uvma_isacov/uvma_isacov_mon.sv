@@ -123,8 +123,8 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
   mon_trn.instr = uvma_isacov_instr_c#(ILEN,XLEN)::type_id::create("mon_instr");
   mon_trn.instr.rvfi = rvfi_instr;
   // Mark trapped instructions from RVFI
-  mon_trn.instr.trap = rvfi_instr.trap;
-  mon_trn.instr.cause = rvfi_instr.cause;
+  mon_trn.instr.trap = rvfi_instr.trap[0];
+  mon_trn.instr.cause = rvfi_instr.trap >> 1;
 
   // Get the config
   void'(uvm_config_db#(uvma_isacov_cfg_c)::get(this, "", "cfg", cfg));
