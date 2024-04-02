@@ -23,7 +23,7 @@
 
 /**
  * Component sampling transactions from a Clock & Reset virtual interface
- * (uvma_rvfi_instr_if).
+ * (uvma_rvfi_instr_if_t).
  */
 class uvma_rvfi_instr_mon_c#(int ILEN=DEFAULT_ILEN,
                              int XLEN=DEFAULT_XLEN) extends uvm_monitor;
@@ -184,6 +184,45 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
               mon_trn.mem_wdata = cntxt.instr_vif[nret_id].mon_cb.rvfi_mem_wdata;
               mon_trn.mem_wmask = cntxt.instr_vif[nret_id].mon_cb.rvfi_mem_wmask;
 
+              mon_trn.gpr_rdata = cntxt.instr_vif[nret_id].mon_cb.rvfi_gpr_rdata;
+              mon_trn.gpr_rmask = cntxt.instr_vif[nret_id].mon_cb.rvfi_gpr_rmask;
+              mon_trn.gpr_wdata = cntxt.instr_vif[nret_id].mon_cb.rvfi_gpr_wdata;
+              mon_trn.gpr_wmask = cntxt.instr_vif[nret_id].mon_cb.rvfi_gpr_wmask;
+
+             //TODO:MT update with parity for 40S
+             mon_trn.insn_nmi = 0;
+             if (mon_trn.intr.intr) begin
+                // NMI detected
+                if ((cfg.nmi_load_fault_enabled && mon_trn.intr.cause == cfg.nmi_load_fault_cause) ||
+                   (cfg.nmi_store_fault_enabled && mon_trn.intr.cause == cfg.nmi_store_fault_cause)) begin
+                   mon_trn.insn_nmi = 1;
+                   mon_trn.insn_nmi_cause = mon_trn.intr.cause;
+                end
+                // External interrupt
+                else begin
+                   mon_trn.insn_interrupt    = 1;
+                   mon_trn.insn_interrupt_id = { 1'b0, mon_trn.intr.cause };
+                end
+             end
+
+             dcsr_ret_data = mon_trn.csrs["dcsr"].get_csr_retirement_data();
+             // In debug mode, detect NMIP event for a data bus error
+             if (mon_trn.dbg_mode &&
+                 !last_dcsr_nmip &&
+                 mon_trn.nmip[0] &&
+                 dcsr_ret_data[3])
+             begin
+                `uvm_info("RVFIMON", $sformatf("Debug NMIP"), UVM_LOW)
+
+                if (mon_trn.nmip[1] == 0) begin
+                   mon_trn.insn_nmi = 1;
+                   mon_trn.insn_nmi_cause = cfg.nmi_load_fault_cause;
+                end else begin
+                   mon_trn.insn_nmi = 1;
+                   mon_trn.insn_nmi_cause = cfg.nmi_store_fault_cause;
+                end
+             end
+
               // Get the CSRs
               if (!cfg.core_cfg.disable_all_csr_checks) begin
                   if (!cfg.unified_csr_vif) begin
@@ -284,4 +323,5 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
 endtask : monitor_rvfi_instr
 
 `endif // __UVMA_RVFI_INSTR_MON_SV__
+
 

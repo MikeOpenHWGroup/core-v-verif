@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
+//TODO: should we change the if-defines?
 `ifndef __UVMA_RVFI_CSR_IF_SV__
 `define __UVMA_RVFI_CSR_IF_SV__
 
@@ -22,7 +22,7 @@
  * Encapsulates all signals and clocking of RVFI csruction interface. Used by
  * monitor,
  */
-interface uvma_rvfi_csr_if
+interface uvma_rvfi_csr_if_t
   import uvma_rvfi_pkg::*;
   #(int XLEN=DEFAULT_XLEN)
   (
@@ -62,7 +62,22 @@ interface uvma_rvfi_csr_if
 
   modport passive_mp    (clocking mon_cb);
 
-endinterface : uvma_rvfi_csr_if
+  // -------------------------------------------------------------------
+  // Functions
+  // -------------------------------------------------------------------
+
+
+  function automatic logic [XLEN-1:0] pre_state();
+    pre_state = (rvfi_csr_rdata & rvfi_csr_rmask);
+  endfunction : pre_state
+
+
+  function automatic logic [XLEN-1:0] post_state();
+    post_state = (rvfi_csr_rdata & rvfi_csr_rmask & ~rvfi_csr_wmask) | (rvfi_csr_wdata & rvfi_csr_wmask);
+  endfunction : post_state
+
+
+endinterface : uvma_rvfi_csr_if_t
 
 interface uvma_rvfi_unified_csr_if
   import uvma_rvfi_pkg::*;

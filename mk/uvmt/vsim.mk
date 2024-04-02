@@ -24,9 +24,9 @@
 # Executables
 VLIB   					= vlib
 VMAP 					= vmap
-VLOG 					= $(CV_SIM_PREFIX) vlog
-VOPT 					= $(CV_SIM_PREFIX) vopt
-VSIM 					= $(CV_SIM_PREFIX) vsim
+VLOG 					= $(CV_SIM_PREFIX) vlog +define+QUESTA_VSIM
+VOPT 					= $(CV_SIM_PREFIX) vopt +define+QUESTA_VSIM
+VSIM 					= $(CV_SIM_PREFIX) vsim +define+QUESTA_VSIM
 VISUALIZER				= $(CV_TOOL_PREFIX) visualizer
 VCOVER                  = vcover
 
@@ -47,6 +47,26 @@ VSIM_COV 				?= -coverage
 VOPT_WAVES_ADV_DEBUG    ?= -designfile design.bin
 VSIM_WAVES_ADV_DEBUG    ?= -qwavedb=+signal+assertion+ignoretxntime+msgmode=both
 VSIM_WAVES_DO           ?= $(VSIM_SCRIPT_DIR)/waves.tcl
+
+# Warning suppressions. TODO: review
+VSIM_SUPPRESS            = -suppress 2181 \
+                           -suppress 2250 \
+                           -suppress 2577 \
+                           -suppress 2583 \
+                           -suppress 7031 \
+                           -suppress 7034 \
+                           -suppress 8522 \
+                           -suppress 8549 \
+                           -suppress 8550 \
+                           -suppress 13314 \
+                           -suppress 13185 \
+                           -suppress 13262 \
+                           -suppress 13288 \
+						   -suppress vlog-2643 \
+                           -suppress vlog-2643 \
+                           -suppress vlog-2697 \
+                           -suppress vlog-2745 \
+                           -suppress vlog-7027
 
 # Common QUIET flag defaults to -quiet unless VERBOSE is set
 ifeq ($(call IS_YES,$(VERBOSE)),YES)
@@ -78,13 +98,7 @@ VSIM_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \
                 +incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
 
 VLOG_LDGEN_FLAGS ?= \
-                    -suppress 2577 \
-                    -suppress 2583 \
-                    -suppress 13185 \
-                    -suppress 13314 \
-                    -suppress 13288 \
-                    -suppress 2181 \
-                    -suppress 13262 \
+					$(VSIM_SUPPRESS) \
                     -timescale "1ns/1ps" \
                     -sv \
                     -mfcu \
@@ -94,7 +108,7 @@ VLOG_LDGEN_FLAGS ?= \
 VOPT_LDGEN_FLAGS ?= \
                     -debugdb \
                     -fsmdebug \
-                    -suppress 7034 \
+					$(VSIM_SUPPRESS) \
                     +acc \
                     $(QUIET)
 
@@ -105,23 +119,15 @@ VSIM_LDGEN_FLAGS ?= \
 ###############################################################################
 # VLOG (Compilation)
 VLOG_FLAGS    ?= \
-		-suppress 2577 \
-		-suppress 2583 \
-		-suppress 13185 \
-		-suppress 13314 \
-		-suppress 13288 \
-		-suppress 2181 \
-		-suppress 13262 \
-		-suppress 13071 \
-		-suppress 13401 \
-		-suppress vlog-2745 \
-		-timescale "1ns/1ps" \
-		-sv \
-		-64 \
-		-mfcu \
-		+acc=rb \
-		$(QUIET) \
-		-writetoplevels  uvmt_$(CV_CORE_LC)_tb
+                 $(VSIM_SUPPRESS) \
+                 -timescale "1ns/1ps" \
+                 -sv \
+                 -64 \
+                 -mfcu \
+                 +acc=rb \
+                 $(SV_CMP_FLAGS) \
+                 $(QUIET) \
+                 -writetoplevels uvmt_$(CV_CORE_LC)_tb
 
 VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 
@@ -152,9 +158,18 @@ VOPT_FLAGS    ?= \
                  -64 \
                  -debugdb \
                  -fsmdebug \
-                 -suppress 7034 \
+                 $(VSIM_SUPRESS) \
                  +acc \
                  $(QUIET)
+
+###############################################################################
+# Seed management for constrained-random sims.
+# This is somewhat redundant since this is typically handled in 'uvmt.mk'.
+# However, the command-line arg to pass a random seed to VSIM interpret the
+# seed arg as a signed integer and throws a vsim-3071 error is the seed is negative.
+ifeq ($(SEED),random)
+RNDSEED = random
+endif
 
 ###############################################################################
 # VSIM (Simulaion)
@@ -163,11 +178,6 @@ VSIM_FLAGS        += $(VSIM_USER_FLAGS)
 VSIM_FLAGS        += $(USER_RUN_FLAGS)
 VSIM_FLAGS        += -sv_seed $(RNDSEED)
 VSIM_FLAGS        += -64
-VSIM_FLAGS        += -suppress 7031
-VSIM_FLAGS        += -suppress 8858
-VSIM_FLAGS        += -suppress 8522
-VSIM_FLAGS        += -suppress 8550
-VSIM_FLAGS        += -suppress 8549
 VSIM_FLAGS        += -permit_unmatched_virtual_intf
 VSIM_DEBUG_FLAGS  ?= -debugdb
 VSIM_GUI_FLAGS    ?= -gui -debugdb
@@ -175,12 +185,33 @@ VSIM_SCRIPT_DIR	   = $(abspath $(MAKE_PATH)/../tools/vsim)
 
 VSIM_UVM_ARGS      = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 
-VSIM_FLAGS += -sv_lib $(basename $(OVP_MODEL_DPI))
+# Only append the IMPERAS_DV_MODEL sv_lib flag if the file actually exists)
+#ifneq (,$(wildcard $(IMPERAS_DV_MODEL)))
+#  ifeq ($(call IS_YES,$(USE_ISS)),YES)
+#    VSIM_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
+#  endif
+#endif
+
+
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
-VSIM_FLAGS += +USE_ISS
+  ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
+    export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
+    export FILE_LIST_IDV        ?=
+  else
+    VSIM_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
+    export FILE_LIST_IDV      ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
+    export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dv_deps.flist
+  endif
+  VSIM_FLAGS += +USE_ISS
+  VSIM_FLAGS += +define+USE_IMPERASDV
+  VSIM_FLAGS += +define+USE_ISS
 else
-VSIM_FLAGS += +DISABLE_OVPSIM
+  VSIM_PLUSARGS               += +DISABLE_OVPSIM
+  VLOG_FLAGS                  += +DISABLE_OVPSIM
+  export FILE_LIST_IDV_DEPS   ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
+  export FILE_LIST_IDV        ?=
 endif
+
 ifeq ($(call IS_YES,$(TEST_DISABLE_ALL_CSR_CHECKS)),YES)
 VSIM_FLAGS +="+DISABLE_ALL_CSR_CHECKS"
 endif
@@ -342,26 +373,51 @@ ldgen: vlog_ldgen vopt_ldgen vsim_ldgen
 ################################################################################
 # corev-dv generation targets
 
-vlog_corev-dv:
+vlog_corev-dv: svlib
+	@echo "$(BANNER)"
+	@echo "* Running vlog_corev-dv in $(SIM_CFG_RESULTS)"
+	@echo "* Log: $(SIM_CFG_RESULTS)/vlog.log"
+	@echo "* FILE_LIST_IDV_DEPS = $(FILE_LIST_IDV_DEPS)"
+	@echo "* FILE_LIST_IDV      = $(FILE_LIST_IDVS)"
+	@echo "$(BANNER)"
 	$(MKDIR_P) $(SIM_COREVDV_RESULTS)
 	$(MKDIR_P) $(COREVDV_PKG)/out_$(DATE)/run
 	cd $(SIM_COREVDV_RESULTS) && \
 		$(VLIB) $(VWORK)
 	cd $(SIM_COREVDV_RESULTS) && \
 		$(VLOG) \
+			-work $(VWORK) \
+			-l vlog.log \
 			$(VLOG_FLAGS) \
+			$(CFG_COMPILE_FLAGS) \
+			+incdir+$(DV_UVME_PATH) \
+			+incdir+$(DV_UVMT_PATH) \
 			+incdir+$(UVM_HOME) \
-			$(VSIM_PMA_INC) \
-			$(UVM_HOME)/uvm_pkg.sv \
 			+incdir+$(CV_CORE_COREVDV_PKG)/target/$(CV_CORE_LC) \
 			+incdir+$(RISCVDV_PKG)/user_extension \
 			+incdir+$(COREVDV_PKG) \
 			+incdir+$(CV_CORE_COREVDV_PKG) \
-			$(CFG_COMPILE_FLAGS) \
+			$(VSIM_PMA_INC) \
+			$(UVM_HOME)/uvm_pkg.sv \
 			-f $(CV_CORE_MANIFEST) \
 			-f $(COREVDV_PKG)/manifest.f \
-			$(CFG_PLUSARGS) \
-			-l vlog.log
+			$(VLOG_FILE_LIST) \
+			$(TBSRC_PKG)
+
+
+#			$(VLOG_FLAGS) \
+#			+incdir+$(UVM_HOME) \
+#			$(VSIM_PMA_INC) \
+#			$(UVM_HOME)/uvm_pkg.sv \
+#			+incdir+$(CV_CORE_COREVDV_PKG)/target/$(CV_CORE_LC) \
+#			+incdir+$(RISCVDV_PKG)/user_extension \
+#			+incdir+$(COREVDV_PKG) \
+#			+incdir+$(CV_CORE_COREVDV_PKG) \
+#			$(CFG_COMPILE_FLAGS) \
+#			-f $(CV_CORE_MANIFEST) \
+#			-f $(COREVDV_PKG)/manifest.f \
+#			$(CFG_PLUSARGS) \
+#			-l vlog.log
 
 vopt_corev-dv:
 	cd $(SIM_COREVDV_RESULTS) && \
@@ -410,25 +466,33 @@ corev-dv: clean_riscv-dv clone_riscv-dv comp_corev-dv
 # Makefile of this <sim>.mk implements "all_compliance", the target that
 # compiles the test-programs.
 #
-# There is a dependancy between RISCV_ISA and COMPLIANCE_PROG which *you* are
-# required to know.  For example, the I-ADD-01 test-program is part of the rv32i
-# testsuite.
+# There is a dependancy between RISCV_DEVICE and COMPLIANCE_PROG which *you*
+# are required to know. For example, the add-01 test-program is part of the
+# RISCV_DEVICE=I testsuite, where device denotes the ISA extension name.
 # So this works:
-#                make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ADD-01
+#                make compliance RISCV_DEVICE=I COMPLIANCE_PROG=add-01
 # But this does not:
-#                make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=I-ADD-01
+#                make compliance RISCV_DEVICE=C COMPLIANCE_PROG=add-01
 #
-RISCV_ISA       ?= rv32i
-COMPLIANCE_PROG ?= I-ADD-01
+RISCV_ISA       ?= rv32i_m
+RISCV_DEVICE    ?= I
+COMPLIANCE_PROG ?= add-01
 
 SIG_ROOT          ?= $(SIM_CFG_RESULTS)/$(RISCV_ISA)
 SIG               ?= $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX)/$(COMPLIANCE_PROG).signature_output
-REF               ?= $(COMPLIANCE_PKG)/riscv-test-suite/$(RISCV_ISA)/references/$(COMPLIANCE_PROG).reference_output
+REF               ?= $(COMPLIANCE_PKG)/riscv-test-suite/$(RISCV_ISA)/$(RISCV_DEVICE)/references/$(COMPLIANCE_PROG).reference_output
 COMPLIANCE_RUN_DIR = $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX)
 TEST_PLUSARGS     ?= +signature=$(COMPLIANCE_PROG).signature_output
 
 ifneq ($(call IS_NO,$(COMP)),NO)
 VSIM_COMPLIANCE_PREREQ = build_compliance
+endif
+
+# 40p workaround for ISS configuration
+ifeq ($(CV_CORE_LC),cv32e40p)
+	ISS_CFG = export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic
+else
+	ISS_CFG = IMPERAS_TOOLS=$(COMPLIANCE_RUN_DIR)/ovpsim.ic
 endif
 
 # Target to run VSIM (i.e. run the simulation)
@@ -440,6 +504,7 @@ compliance: $(VSIM_COMPLIANCE_PREREQ) $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 	mkdir -p $(COMPLIANCE_RUN_DIR) && \
 	cd $(COMPLIANCE_RUN_DIR) && \
 		$(VMAP) work $(SIM_CFG_RESULTS)/work
+	$(ISS_CFG) && \
 	cd $(COMPLIANCE_RUN_DIR) && \
 		$(VSIM) \
 			-work $(VWORK) \
@@ -450,10 +515,8 @@ compliance: $(VSIM_COMPLIANCE_PREREQ) $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			$(RTLSRC_VOPT_TB_TOP) \
 			$(CFG_PLUSARGS) \
 			$(TEST_PLUSARGS) \
-			+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
-			+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
-
-compliance: export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic
+			+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(RISCV_DEVICE)/$(COMPLIANCE_PROG).hex \
+			+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(RISCV_DEVICE)/$(COMPLIANCE_PROG).elf
 
 ################################################################################
 # Questa simulation targets
@@ -484,6 +547,8 @@ vlog: $(LIBS) lib
 	@echo "$(BANNER)"
 	@echo "* Running vlog in $(SIM_CFG_RESULTS)"
 	@echo "* Log: $(SIM_CFG_RESULTS)/vlog.log"
+	@echo "* FILE_LIST_IDV_DEPS = $(FILE_LIST_IDV_DEPS)"
+	@echo "* FILE_LIST_IDV      = $(FILE_LIST_IDVS)"
 	@echo "$(BANNER)"
 	cd $(SIM_CFG_RESULTS) && \
 		$(VLOG) \

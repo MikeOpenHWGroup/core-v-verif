@@ -20,6 +20,12 @@ set_optimize -vlog_prune_on
 # Set glitch strobes
 set_glitch_strobe 1ps
 
+# Enable coverage for type parameterized modules
+set_parameterized_module_coverage -type_parameters_only
+
+# Enable coverage for expressions containing inside operator
+set_expr_scoring -inside
+
 # ----------------------------------------------------------------------------------
 # FSM coverage configruation
 # ----------------------------------------------------------------------------------
@@ -42,6 +48,9 @@ set_expr_coverable_statements -all
 # Toggle coverage smart refinement (refinement for toggle with traverse hierarchy)
 set_toggle_smart_refinement
 
+# Score toggle coverage for ports only
+set_toggle_portsonly
+
 # ----------------------------------------------------------------------------------
 # Covergroup coverage configuration
 # ----------------------------------------------------------------------------------
@@ -51,4 +60,4 @@ set_covergroup -new_instance_reporting
 # Instances/modules to remove from coverage
 # For performance and to avoid spurious warnings, remove these modules from code coverage collection
 # ----------------------------------------------------------------------------------
-deselect_coverage -all -instance uvmt_cv32e40s_tb.iss_wrap...
+deselect_coverage -all -instance uvmt_cv32e40s_tb.imperas_dv...
