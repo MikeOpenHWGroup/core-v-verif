@@ -10,16 +10,16 @@ Appendix replaces the Appendix in the Apache License. You may, at your option,
 choose to treat any Work released under this license as released under the
 Apache License (thus ignoring all sections written below entirely).
 
-1. Terminology in the Apache License is supplemented or modified as follows:
+## 1. Terminology in the Apache License is supplemented or modified as follows:
 
-- "Authorship": any reference to ‘authorship’ shall be taken to read "authorship
+- "Authorship": any reference to â€˜authorshipâ€™ shall be taken to read "authorship
   or design".
 
-- "Copyright owner": any reference to ‘copyright owner’ shall be taken to read
+- "Copyright owner": any reference to â€˜copyright ownerâ€™ shall be taken to read
   "Rights owner".
 
-- "Copyright statement": the reference to ‘copyright statement’ shall be taken
-  to read ‘copyright or other statement pertaining to Rights’.
+- "Copyright statement": the reference to â€˜copyright statementâ€™ shall be taken
+  to read â€˜copyright or other statement pertaining to Rightsâ€™.
 
 - The following new definition shall be added to the Definitions section of the
   Apache License:
@@ -64,7 +64,8 @@ Apache License (thus ignoring all sections written below entirely).
   relating to Rights that is included in or attached to the work (an example is
   provided in the Appendix below).
 
-2. Grant of License. Subject to the terms and conditions of this License, each
+## 2. Grant of License.
+   Subject to the terms and conditions of this License, each
    Contributor hereby grants to You a perpetual, worldwide, non-exclusive,
    no-charge, royalty-free, irrevocable license under the Rights to reproduce,
    prepare Derivative Works of, make, adapt, repair, publicly display, publicly
