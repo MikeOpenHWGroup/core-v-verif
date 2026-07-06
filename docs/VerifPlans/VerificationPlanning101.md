@@ -20,35 +20,35 @@
 -->
 
 # What is a Verification Plan (Testplan)?
-Verification plans are documents that defines _what_ is to be verified, and _how_ it will be verified.
+Verification plans are documents that define _what_ is to be verified, and _how_ it will be verified.
 They go by many names including Testplan, DV plan or just Vplan.
 A complete, high quality verification plan is one of the most valuable items produced by a verification project.
 
 ## Verification Planning
 The purpose of a verification plan is to identify what features need to be verified; the success criteria of the feature and the coverage metrics for testing the feature.
 Verification plans also allow us to reason about the capabilities of the testbench.
-One way to think of a verification plan is that it is a laundry list of thing to verify.
-Thats is, we want a detailed list of **_what_** to verify.
-A verification plan should also specify **_how_** each item (feature) in the list is to be verifed.
+One way to think of a verification plan is that it is a laundry list of things to verify.
+That is, we want a detailed list of **_what_** to verify.
+A verification plan should also specify **_how_** each item (feature) in the list is to be verified.
 
-## Format of a Verificaton Plan
+## Format of a Verification Plan
 Most CORE-V verification projects use spreadsheets to capture verification plans, and a template is provided.
 The template for the spreadsheet is simple enough that you can use either Microsoft Office Excel, Google Sheets or LibreOffice Calc.
 The verification plan [template](https://github.com/openhwgroup/core-v-verif/blob/master/docs/VerifPlans/templates/CORE-V_Simulation_VerifPlan_Template.xlsx) for CORE-V-VERIF is located at the root of the [VerificationPlan](https://github.com/openhwgroup/core-v-verif/tree/master/docs/VerifPlans) directory.
-Note that at OpenHW is also exploring the use of in-house tooling for Verification Planning, but the remainder of this document assumes the use of a spreadsheet.
+Note that OpenHW is also exploring the use of in-house tooling for Verification Planning, but the remainder of this document assumes the use of a spreadsheet.
 
 ## A Trivial Example: the RV32I ADDI Instruction
 Let's assume your task is to verify a core's implementation of the RV32I ADDI instruction.
 Simple right?
-Create a simple assembler program with a few **_addi_** instructions check the results and we're done.
-Unfortunately, simply checking for the correct result (rd = rs1 + imm), of a few instructions is insufficent.
-On the other hand, simulating every possible andi operation is impractical:
+Create a simple assembler program with a few **_addi_** instructions, check the results, and we're done.
+Unfortunately, simply checking for the correct result (rd = rs1 + imm) of a few instructions is insufficient.
+On the other hand, simulating every possible addi operation is impractical:
 with one 32-bit and one 12-bit operand there are approximately 1.8\*10^13 unique sums that can be calculated.
 In [big-oh](https://rob-bell.net/2009/06/a-beginners-guide-to-big-o-notation/) notation that is O(13).
 Including the cross-products of source and destination register yields O(16) unique instructions simply to fully verify addi.
 
-Obviously this is impractical and one of the things that makes Verification an art is determing the minimal amount of testing to have confidence that a feature is sufficiently tested.
-Making a few simplifying assumptions can reduce the problem to a managible size: for example we could say that addi is fully verified by covering the following cases:
+Obviously this is impractical and one of the things that makes Verification an art is determining the minimal amount of testing to have confidence that a feature is sufficiently tested.
+Making a few simplifying assumptions can reduce the problem to a manageable size: for example we could say that addi is fully verified by covering the following cases:
 * Use x0..x31 as rs1
 * Use x0..x31 as rd (Note: the result of this operation will always be 0x00000000 when rd is x0)
 * rd == rs1
@@ -56,8 +56,8 @@ Making a few simplifying assumptions can reduce the problem to a managible size:
 * Set/Clear all bits of rs1
 * Set/Clear all bits of rd
 
-You may see the above as overkill or underkill depending on your understanding of the micro-architecture or your level of risk adversion.
-The point is, developing a verification plan forces you to consider your verificaiton needs and plan accordingly.
+You may see the above as overkill or underkill depending on your understanding of the micro-architecture or your level of risk aversion.
+The point is, developing a verification plan forces you to consider your verification needs and plan accordingly.
 
 ## Features and Use Cases
 When creating a verification plan for a specific feature, it is often helpful to consider three types of use-cases: success, edge and corner cases.
@@ -65,12 +65,12 @@ When creating a verification plan for a specific feature, it is often helpful to
 ### Success Cases
 _Success cases_ are 'typical use cases' for a specific feature.
 In our addi example, 2+2=4 would be considered a success case.
-Most feature will have a large number of success cases and it is typically not required to test then all.
+Most features will have a large number of success cases and it is typically not required to test them all.
 
 ### Edge Cases
-Almost every feature of the device-under-test (or DUT) will have a number of _edge cases_ that require special attention in your testplan. 
-In this document, an _edge case_ is a special, perhaps uncommon, scenario that have notibly different behavior than a success case.
-The edge case for the RV32I ADDI instruction are:
+Almost every feature of the device-under-test (or DUT) will have a number of _edge cases_ that require special attention in your testplan.
+In this document, an _edge case_ is a special, perhaps uncommon, scenario that has noticeably different behavior than a success case.
+The edge cases for the RV32I ADDI instruction are:
 1. Values of rs1 and imm that result in an overflow[^1].
 2. Using x0 for rd.
 3. Using x0 for rs1.
@@ -79,7 +79,7 @@ The edge case for the RV32I ADDI instruction are:
 [^1]: Note that in RISC-V integer instructions, overflows are not detected or stored.
 
 ### Corner Cases
-_Corner cases_ are, by defintion, very difficult to plan for.
+_Corner cases_ are, by definition, very difficult to plan for.
 A corner case is not a _feature_ of the device that can be readily discerned by reading the specification.
 As such, a typical verification plan will not have a lot of content related to corner cases.
 
@@ -102,15 +102,15 @@ In some cases, it may be natural to use the section header name of the reference
 ## Sub-Feature
 This is an optional, but often used column.
 Using our previous examples, ADDI is a sub-feature of RV32I Register-Immediate Instructions.
-If it makes sense to decompose the Feature into two or more sub-features, use this columnn for that.
-If required, add a column for sub-sub-features. 
+If it makes sense to decompose the Feature into two or more sub-features, use this column for that.
+If required, add a column for sub-sub-features.
 
 ## Feature Description
-A summary of what the features does.
-It should be a _summary_, not a verbatium copy-n-paste from the Requirements Document.
+A summary of what the feature does.
+It should be a _summary_, not a verbatim copy-n-paste from the Requirements Document.
 
 ## Verification Goals
-A summary of what stimulus and/or configuration needs to be generated/checked/covered to ensue sufficient testing of the Feature.
+A summary of what stimulus and/or configuration needs to be generated/checked/covered to ensure sufficient testing of the Feature.
 Recall the example of the _addi_ instruction.
 The verification goals of that feature are:
 * Unless rd is x0, rd gets the arithmetic sum of rs1 and the sign-extended immediate, otherwise it is 0x0.
@@ -139,15 +139,15 @@ Here we attempt to answer the question, "how will the testbench know the test pa
 There are several methods that are typically used in CORE-V projects, and it is common to use more than one for a given item in a Verification Plan.
 * **Self Checking**: A self-checking test-program encodes the correct result directly into the testcase and compares what the DUT does against this "known good" outcome.
   See the [RISCY Testcases](https://core-v-docs-verif-strat.readthedocs.io/en/latest/pulp_verif.html#ri5cy-testcases) section of the Verification Strategy for an example of this.
-  This strategy is used extensively by the RISC-V Internation Architectural Certification Tests.
-* **Signature Check**: This is a more sophisitcated form of a self checking test-program.
+  This strategy is used extensively by the RISC-V International Architecture Certification Tests.
+* **Signature Check**: This is a more sophisticated form of a self-checking test-program.
   The results of the test are used to calculate a signature and this is compared against a "known good" signature.
   This strategy is also used by the RISC-V International Architecture Certification tests.
 * **Check against RM**: Here, the test-program does not "know" the correct output of the test.
   Instead, the pass/fail criteria is determined by a **_Reference Model_** (RM).
   An RM is a testbench component which models some or all of the DUT behavior.
   The testbench must compare the actual results from the DUT and the expected results from the RM.
-  When practical, this is the preferred approach because it makes testcase maintenance simplier.
+  When practical, this is the preferred approach because it makes testcase maintenance simpler.
 * **Assertion Check**: Failure is detected by an assertion, typically coded in SVA.
 * **Any/All**: Any (or all) of the above pass/fail criteria can be reasonably assumed to catch a non-compliance of a specific feature/requirement.
 * **Other**: If one of the above Pass/Fail Criteria does not fit your needs, specify it here.
@@ -161,7 +161,7 @@ Choose one or more of the following:
   Note that these tests assume that the pass/fail criteria will be "Check against ISS" (or other reference model).
 * **Constrained-Random**: a constrained-random testcase.
   Typically the stimulus for these will come from the Google random instruction stream generator.
-  Note that by defintion these tests cannot be self-checking.
+  Note that by definition these tests cannot be self-checking.
 * **ENV capability, not specific test**: Often, a specific feature is not specifically covered by a specific test or check.
   For example, an assertion checking for bus protocol errors could reasonably expect to cause a failure with any type of test.
 * **Other**: If one of the above Test Types does not fit your needs, specify it here.
@@ -169,8 +169,8 @@ Choose one or more of the following:
 ### Coverage Method
 How will we know that the Feature is verified (covered)?  There are several choices here:
 * **Testcase:** if the testcase was run, the Feature was tested.
-* **Functional Coverage:** the testbench supports SystemVerilog cover_groups that measures stimulus/configuration/response conditions to show that the Feature was tested.
-  **This is the perferred method of coverage.**
+* **Functional Coverage:** the testbench supports SystemVerilog covergroups that measure stimulus/configuration/response conditions to show that the Feature was tested.
+  **This is the preferred method of coverage.**
 * **Assertion Coverage**: an alternate form of functional coverage, implemented as SVA cover properties.
 * **Code Coverage:** the Feature is deemed to be tested when the specific conditions in the RTL have been exercised.
 
