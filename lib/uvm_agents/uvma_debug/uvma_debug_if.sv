@@ -28,8 +28,13 @@ interface uvma_debug_if(
     wire clk;
     wire reset_n;
     wire debug_req;
-  
-    bit is_active; 
+
+    // Probed from the core's controller (id_in_ready_o): true when it's safe to present a new
+    // interrupt/debug request without racing one already in flight. See uvma_interrupt_if.sv for
+    // the full rationale (same signal, same reasoning, shared by both request sources).
+    wire id_in_ready;
+
+    bit is_active;
     bit debug_drv;
 
     assign debug_req = is_active ? debug_drv : 1'b0;
@@ -52,6 +57,7 @@ interface uvma_debug_if(
       // TODO Implement uvma_debug_if::drv_cb()
       //      Ex: output  enable,
       //                  data  ;
+       input #1step id_in_ready;
        output debug_drv;
    endclocking : drv_cb
    

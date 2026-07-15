@@ -115,7 +115,12 @@ endtask : run_phase
 
 task uvma_debug_drv_c::drv_req(uvma_debug_seq_item_c req);
 
-   @(cntxt.vif.drv_cb); // WARNING If no time is consumed by this task, a zero-delay oscillation loop will occur and stall simulation
+   @(cntxt.vif.drv_cb);
+   // TODO: address this properly!
+   // WARNING If no time is consumed by this task, a zero-delay oscillation loop will occur and stall simulation
+   // See the matching comment in uvma_interrupt_drv_c::wait_and_assert_irq_edge -- that wait can
+   // deadlock outright when the core is parked in WFI (id_in_ready_o stays low while asleep), and
+   // the hazard defends against is now fixed by probing the controller (in cve2_controller.sv).
    `uvm_info("DEBUGDRV", $sformatf("Driving debug:\n%s",req.sprint()), UVM_HIGH)
    cntxt.vif.drv_cb.debug_drv <= 1'b1;
    repeat (req.active_cycles) @(cntxt.vif.mon_cb);
