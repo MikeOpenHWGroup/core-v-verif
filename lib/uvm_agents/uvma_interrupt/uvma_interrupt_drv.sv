@@ -33,13 +33,11 @@ class uvma_interrupt_drv_c extends uvm_driver#(
 
    semaphore               assert_until_ack_sem[32];
 
-   // Serializes the actual irq_drv[] rising edge across all 32 lines (not just same-index, unlike
-   // assert_until_ack_sem above): only one new edge is allowed at a time, and the holder keeps the
-   // lock for 2 extra cycles after driving it, so any two new rising edges are guaranteed to land
-   // on different clock edges and be at least 2 cycles apart. Deliberately does NOT gate on
-   // cntxt.vif.drv_cb.id_in_ready (the core's id_in_ready_o): id_in_ready_o stays low while the
-   // core is parked in WFI, so waiting on it here would block forever on the very interrupt meant
-   // to wake it.
+   // The 'new_irq_edge_sem' semaphore is used to serialize the actual irq_drv[]
+   // rising edge across all 32 lines (not just same-index, unlike 'assert_until_ack_sem' above)
+   // Only one new edge is allowed at a time, and the holder keeps the lock for 2
+   // extra cycles after driving it, so any two new rising edges are guaranteed to land
+   // on different clock edges and be at least 2 cycles apart.
    semaphore               new_irq_edge_sem;
 
    // TLM
@@ -194,15 +192,6 @@ endtask : drv_req
 
 task uvma_interrupt_drv_c::wait_and_assert_irq_edge(int unsigned index);
    new_irq_edge_sem.get(1);
-   // Previously also waited on cntxt.vif.drv_cb.id_in_ready here (the core's id_in_ready_o) before
-   // driving the edge, to avoid racing an in-flight exception request. Reverted: that wait can
-   // deadlock outright when the core is genuinely parked in WFI (id_in_ready_o stays low while
-   // asleep), since it then blocks forever waiting to "be ready" for the very interrupt that would
-   // wake it. The actual false-assertion hazard it was defending against
-   // (CVE2DontSkipExceptionReq/CVE2SetExceptionPCOnSpecialReqIfExpected on a withdrawn-but-still-
-   // latched request) is now fixed at its root in cve2_controller.sv (exception_req_withdrawn), so
-   // this driver-side gate is redundant as well as harmful. See
-   // E20DV/tmp/exception_req_pending_finding.md.
    cntxt.vif.drv_cb.irq_drv[index] <= 1'b1;
    repeat (2) @(cntxt.vif.drv_cb);
    new_irq_edge_sem.put(1);

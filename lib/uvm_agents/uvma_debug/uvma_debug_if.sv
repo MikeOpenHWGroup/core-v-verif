@@ -29,9 +29,10 @@ interface uvma_debug_if(
     wire reset_n;
     wire debug_req;
 
-    // Probed from the core's controller (id_in_ready_o): true when it's safe to present a new
-    // interrupt/debug request without racing one already in flight. See uvma_interrupt_if.sv for
-    // the full rationale (same signal, same reasoning, shared by both request sources).
+    // 'id_in_ready' is probed from the core's controller (e.g. id_in_ready_o in cve2_controller.sv).
+    // When true it is safe to present a new interrupt/debug request without racing
+    // one already in flight. See uvma_interrupt_if.sv for the full rationale.
+    // TODO: set 'id_in_ready' true for cores that do not need it.
     wire id_in_ready;
 
     bit is_active;
@@ -54,9 +55,6 @@ interface uvma_debug_if(
     * Used by uvma_debug_drv_c.
     */
    clocking drv_cb @(posedge clk or reset_n);
-      // TODO Implement uvma_debug_if::drv_cb()
-      //      Ex: output  enable,
-      //                  data  ;
        input #1step id_in_ready;
        output debug_drv;
    endclocking : drv_cb
