@@ -33,6 +33,13 @@ class uvma_interrupt_drv_c extends uvm_driver#(
 
    semaphore               assert_until_ack_sem[32];
 
+   // The 'new_irq_edge_sem' semaphore is used to serialize the actual irq_drv[]
+   // rising edge across all 32 lines (not just same-index, unlike 'assert_until_ack_sem' above)
+   // Only one new edge is allowed at a time, and the holder keeps the lock for 2
+   // extra cycles after driving it, so any two new rising edges are guaranteed to land
+   // on different clock edges and be at least 2 cycles apart.
+   semaphore               new_irq_edge_sem;
+
    // TLM
    uvm_analysis_port#(uvma_interrupt_seq_item_c)  ap;
 
@@ -66,6 +73,13 @@ class uvma_interrupt_drv_c extends uvm_driver#(
     * Drives the virtual interface's (cntxt.vif) signals using req's contents.
     */
    extern task drv_req(uvma_interrupt_seq_item_c req);
+
+   /**
+    * Waits for new_irq_edge_sem and cntxt.vif.drv_cb.id_in_ready, then drives irq_drv[index] high
+    * and holds the lock a couple more cycles so id_in_ready has time to respond before the next
+    * waiting caller re-checks it.
+    */
+   extern task wait_and_assert_irq_edge(int unsigned index);
 
    /**
     * Forked thread to handle interrupts
@@ -112,6 +126,8 @@ function void uvma_interrupt_drv_c::build_phase(uvm_phase phase);
    foreach (assert_until_ack_sem[i]) begin
       assert_until_ack_sem[i] = new(1);
    end
+
+   new_irq_edge_sem = new(1);
 endfunction : build_phase
 
 
@@ -174,6 +190,13 @@ task uvma_interrupt_drv_c::drv_req(uvma_interrupt_seq_item_c req);
 
 endtask : drv_req
 
+task uvma_interrupt_drv_c::wait_and_assert_irq_edge(int unsigned index);
+   new_irq_edge_sem.get(1);
+   cntxt.vif.drv_cb.irq_drv[index] <= 1'b1;
+   repeat (2) @(cntxt.vif.drv_cb);
+   new_irq_edge_sem.put(1);
+endtask : wait_and_assert_irq_edge
+
 task uvma_interrupt_drv_c::assert_irq_until_ack(int unsigned index, int unsigned repeat_count, int unsigned skew);
    // If a thread is already running on this irq, then exit
    if (!assert_until_ack_sem[index].try_get(1))
@@ -182,7 +205,8 @@ task uvma_interrupt_drv_c::assert_irq_until_ack(int unsigned index, int unsigned
    repeat (skew) @(cntxt.vif.drv_cb);
 
    for (int loop = 0; loop < repeat_count; loop++) begin
-      repeat (skew) @(cntxt.vif.drv_cb);cntxt.vif.drv_cb.irq_drv[index] <= 1'b1;
+      repeat (skew) @(cntxt.vif.drv_cb);
+      wait_and_assert_irq_edge(index);
 
       while (1) begin
          @(cntxt.vif.mon_cb);
@@ -199,12 +223,12 @@ endtask : assert_irq_until_ack
 task uvma_interrupt_drv_c::assert_irq(int unsigned index, int unsigned skew);
    if (assert_until_ack_sem[index].try_get(1)) begin
       repeat (skew) @(cntxt.vif.drv_cb);
-      cntxt.vif.drv_cb.irq_drv[index] <= 1'b1;
+      wait_and_assert_irq_edge(index);
       assert_until_ack_sem[index].put(1);
       return;
    end
 
-   cntxt.vif.drv_cb.irq_drv[index] <= 1'b1;
+   wait_and_assert_irq_edge(index);
 endtask : assert_irq
 
 task uvma_interrupt_drv_c::deassert_irq(int unsigned index, int unsigned skew);
