@@ -42,13 +42,15 @@ Let's assume your task is to verify a core's implementation of the RV32I ADDI in
 Simple right?
 Create a simple assembler program with a few **_addi_** instructions, check the results, and we're done.
 Unfortunately, simply checking for the correct result (rd = rs1 + imm) of a few instructions is insufficient.
-On the other hand, simulating every possible addi operation is impractical:
-with one 32-bit and one 12-bit operand there are approximately 1.8\*10^13 unique sums that can be calculated.
-In [big-oh](https://rob-bell.net/2009/06/a-beginners-guide-to-big-o-notation/) notation that is O(13).
-Including the cross-products of source and destination register yields O(16) unique instructions simply to fully verify addi.
+On the other hand, exhaustively simulating all operand-value combinations is impractical.
+A 32-bit source operand and a 12-bit immediate give 2^32 × 2^12 = 2^44 combinations, approximately 1.76 × 10^13.
+Including all 32 source-register choices and all 32 destination-register choices gives a rough upper bound of 2^54,
+approximately 1.80 × 10^16 test combinations, before accounting for constraints such as x0 always containing zero.
 
 Obviously this is impractical and one of the things that makes Verification an art is determining the minimal amount of testing to have confidence that a feature is sufficiently tested.
-Making a few simplifying assumptions can reduce the problem to a manageable size: for example we could say that addi is fully verified by covering the following cases:
+Recognizing that the above are combinations of operand values and register choices, not distinct arithmetic results or instruction encodings,
+allows us to make a few simplifying assumptions to reduce the problem to a manageable size.
+For example we could say that addi is fully verified by covering the following cases:
 * Use x0..x31 as rs1
 * Use x0..x31 as rd (Note: the result of this operation will always be 0x00000000 when rd is x0)
 * rd == rs1
@@ -69,7 +71,7 @@ Most features will have a large number of success cases and it is typically not 
 
 ### Edge Cases
 Almost every feature of the device-under-test (or DUT) will have a number of _edge cases_ that require special attention in your testplan.
-In this document, an _edge case_ is a special, perhaps uncommon, scenario that has noticeably different behavior than a success case.
+In this document, an _edge case_ is a specific, documented scenario that has noticeably different behavior than a success case.
 The edge cases for the RV32I ADDI instruction are:
 1. Values of rs1 and imm that result in an overflow[^1].
 2. Using x0 for rd.
@@ -80,7 +82,7 @@ The edge cases for the RV32I ADDI instruction are:
 
 ### Corner Cases
 _Corner cases_ are, by definition, very difficult to plan for.
-A corner case is not a _feature_ of the device that can be readily discerned by reading the specification.
+Unlike success and edge cases, a corner case is not a behavior of the device that can be readily discerned by reading the specification.
 As such, a typical verification plan will not have a lot of content related to corner cases.
 
 # Using the CORE-V Simulation Verification Plan Template
