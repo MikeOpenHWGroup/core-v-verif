@@ -7,7 +7,7 @@
 #include "debug_module.h"
 #include "devices.h"
 #include "log_file.h"
-#include "Proc.h"
+#include "openhw/cv32e20/Proc.h"
 #include "simif.h"
 #include "Types.h"
 

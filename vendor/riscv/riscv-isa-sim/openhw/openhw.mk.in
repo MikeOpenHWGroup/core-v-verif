@@ -1,0 +1,34 @@
+openhw_subproject_deps = \
+	riscv \
+	disasm \
+	softfloat \
+
+# common/, cv32e20/, and cva6/ are subdirectory-nested sources (unlike
+# every other subproject in this build, which lists flat filenames) --
+# -MMD writes each .d dependency file next to its .o, and none of these
+# are auto-created by the generic compile rule, so they need to exist
+# before the first compile runs.
+$(shell mkdir -p common cv32e20 cva6)
+
+openhw_srcs = \
+	common/Simulation.cc \
+	common/riscv_dpi.cc \
+	common/csrs_ext.cc \
+	common/YamlParamSetter.cc \
+	common/Params.cc \
+	cv32e20/Proc.cc \
+	cva6/cva6_base.cc \
+	cva6/cvxif_base.cc \
+	cva6/cvxif.cc \
+	cva6/cv32a60x.cc \
+
+openhw_install_hdrs = \
+	common/Simulation.h \
+	common/csrs_ext.h \
+	common/YamlParamSetter.h \
+	common/Params.h \
+	cv32e20/Proc.h \
+	cva6/cva6.h \
+	cva6/cvxif.h \
+
+openhw_install_shared_lib = yes
