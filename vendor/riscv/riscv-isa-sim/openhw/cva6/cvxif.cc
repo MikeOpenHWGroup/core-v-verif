@@ -14,7 +14,8 @@
 #include "cvxif.h"
 #include "mmu.h"
 #include <cstring>
-#include "openhw/cv32e20/Proc.h"
+// See 'reference/spike-implementation.md' for Core selection details
+#include "openhw/core_select.h"
 #include "openhw/common/Params.h"
 
 // Define custom insns templates.
